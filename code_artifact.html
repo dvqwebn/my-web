@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘 할 일 - 캘린더 & 알람</title>
+  <style>
+    /* ----- 기본 스타일 & 리셋 ----- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f8;
+      color: #333333;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+
+    /* ----- 컨테이너 ----- */
+    .app-container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ----- 헤더 & 날짜 ----- */
+    .header {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .date-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .nav-btn {
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    .nav-btn:hover {
+      background-color: #e5e7eb;
+    }
+
+    .date-display {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #111827;
+      text-align: center;
+    }
+
+    .today-btn {
+      font-size: 0.75rem;
+      background-color: #eef2ff;
+      color: #4f46e5;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    /* ----- 캘린더 영역 ----- */
+    .calendar-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #374151;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+
+    .day-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #9ca3af;
+      padding-bottom: 6px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: background-color 0.15s;
+    }
+
+    .day-cell:hover:not(.empty) {
+      background-color: #f3f4f6;
+    }
+
+    .day-cell.selected {
+      background-color: #4f46e5 !important;
+      color: #ffffff !important;
+      font-weight: 700;
+    }
+
+    .day-cell.today {
+      border: 1.5px solid #4f46e5;
+      color: #4f46e5;
+      font-weight: 700;
+    }
+
+    .day-cell.has-todo::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #6366f1;
+    }
+
+    .day-cell.selected.has-todo::after {
+      background-color: #ffffff;
+    }
+
+    .day-cell.empty {
+      cursor: default;
+    }
+
+    /* ----- 프로그래스 섹션 ----- */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background-color: #e5e7eb;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #6366f1);
+      border-radius: 9999px;
+      transition: width 0.3s ease;
+    }
+
+    /* ----- 입력 폼 ----- */
+    .input-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .todo-input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .todo-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .time-input {
+      padding: 8px 10px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .add-btn {
+      padding: 0 18px;
+      background-color: #4f46e5;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s ease;
+    }
+
+    .add-btn:hover {
+      background-color: #4338ca;
+    }
+
+    /* ----- 알림 권한 및 옵션 바 ----- */
+    .option-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .alarm-perm-btn {
+      background: none;
+      border: none;
+      color: #4f46e5;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 2px 4px;
+    }
+
+    .clear-btn:hover {
+      color: #ef4444;
+    }
+
+    /* ----- 할 일 목록 ----- */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      list-style: none;
+    }
+
+    /* ----- 할 일 카드 ----- */
+    .todo-card {
+      background: #ffffff;
+      padding: 12px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      transition: transform 0.15s ease;
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox::after {
+      content: "✓";
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .todo-card.completed .checkbox {
+      background-color: #6366f1;
+      border-color: #6366f1;
+    }
+
+    .todo-card.completed .checkbox::after {
+      display: block;
+    }
+
+    .todo-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .todo-text {
+      font-size: 0.95rem;
+      color: #1f2937;
+      word-break: break-all;
+    }
+
+    .todo-card.completed .todo-text {
+      color: #9ca3af;
+      text-decoration: line-through;
+    }
+
+    .time-badge {
+      font-size: 0.75rem;
+      color: #6b7280;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .time-badge.has-alarm {
+      color: #4f46e5;
+      font-weight: 600;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+
+    .delete-btn:hover {
+      color: #ef4444;
+      background-color: #fee2e2;
+    }
+
+    /* ----- 빈 목록 안내 ----- */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    /* ----- 푸터 안내 문구 ----- */
+    .footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- 헤더 영역 (날짜 이동 & 프로그래스) -->
+    <header class="header">
+      <div class="date-navigation">
+        <button id="prevDayBtn" class="nav-btn" title="이전 날짜">&lt;</button>
+        <div class="date-display">
+          <span id="dateText">2026년 10월 24일 토요일</span>
+          <button id="todayBtn" class="today-btn">오늘</button>
+        </div>
+        <button id="nextDayBtn" class="nav-btn" title="다음 날짜">&gt;</button>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-info">
+          <span>달성도</span>
+          <span id="progressText">0 / 0</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 캘린더 영역 -->
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <button id="prevMonthBtn" class="nav-btn">&lt;</button>
+        <span id="calendarMonthText">2026년 10월</span>
+        <button id="nextMonthBtn" class="nav-btn">&gt;</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- 요일 헤더 및 날짜 셀이 JS로 들어갑니다 -->
+      </div>
+    </div>
+
+    <!-- 입력 폼 -->
+    <form id="todoForm" class="input-form">
+      <div class="input-row">
+        <input 
+          type="text" 
+          id="todoInput" 
+          class="todo-input" 
+          placeholder="할 일을 입력하세요..." 
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="add-btn">추가</button>
+      </div>
+      <div class="input-row" style="align-items: center; justify-content: flex-start;">
+        <label for="timeInput" style="font-size: 0.8rem; color: #6b7280; font-weight: 600;">알람 설정:</label>
+        <input type="time" id="timeInput" class="time-input" />
+      </div>
+    </form>
+
+    <!-- 옵션 및 제어 버튼 -->
+    <div class="option-bar">
+      <button id="alarmPermBtn" class="alarm-perm-btn">🔔 알림 권한 허용하기</button>
+      <button id="clearCompletedBtn" class="clear-btn">완료한 것 치우기</button>
+    </div>
+
+    <!-- 할 일 목록 영역 -->
+    <ul id="todoList" class="todo-list"></ul>
+
+    <!-- 빈 상태 안내 -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+      등록된 할 일이 없습니다.<br>새로운 할 일을 추가해 보세요!
+    </div>
+
+    <!-- 데이터 보관 안내 -->
+    <footer class="footer-note">
+      이 목록은 지금 쓰는 브라우저에만 저장됩니다
+    </footer>
+  </div>
+
+  <script>
+    // ----- 데이터 상태 및 변수 -----
+    const STORAGE_KEY = 'daily_todos_v2';
+    // 날짜별 저장 구조: { "YYYY-MM-DD": [ { id, text, time, completed, notified }, ... ] }
+    let todoData = {};
+
+    // 현재 선택된 날짜 (기본: 오늘)
+    let selectedDate = new Date();
+    // 캘린더 표시용 년/월
+    let currentCalendarDate = new Date();
+
+    // DOM 요소
+    const dateText = document.getElementById('dateText');
+    const todayBtn = document.getElementById('todayBtn');
+    const prevDayBtn = document.getElementById('prevDayBtn');
+    const nextDayBtn = document.getElementById('nextDayBtn');
+
+    const calendarMonthText = document.getElementById('calendarMonthText');
+    const prevMonthBtn = document.getElementById('prevMonthBtn');
+    const nextMonthBtn = document.getElementById('nextMonthBtn');
+    const calendarGrid = document.getElementById('calendarGrid');
+
+    const progressText = document.getElementById('progressText');
+    const progressBarFill = document.getElementById('progressBarFill');
+
+    const todoForm = document.getElementById('todoForm');
+    const todoInput = document.getElementById('todoInput');
+    const timeInput = document.getElementById('timeInput');
+    const todoList = document.getElementById('todoList');
+    const emptyState = document.getElementById('emptyState');
+    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+    const alarmPermBtn = document.getElementById('alarmPermBtn');
+
+    // ----- 날짜 유틸리티 함수 -----
+    function formatDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDisplayDate(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+      const dayName = days[date.getDay()];
+      return `${year}년 ${month}월 ${day}일 ${dayName}`;
+    }
+
+    // ----- LocalStorage 로드 & 저장 -----
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          todoData = JSON.parse(saved);
+        } else {
+          todoData = {};
+        }
+      } catch (e) {
+        console.error('LocalStorage 읽기 실패:', e);
+        todoData = {};
+      }
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todoData));
+      } catch (e) {
+        console.error('LocalStorage 저장 실패:', e);
+      }
+    }
+
+    // ----- 현재 날짜의 할 일 목록 반환 -----
+    function getSelectedDateTodos() {
+      const key = formatDateKey(selectedDate);
+      return todoData[key] || [];
+    }
+
+    function setSelectedDateTodos(list) {
+      const key = formatDateKey(selectedDate);
+      if (list.length === 0) {
+        delete todoData[key];
+      } else {
+        todoData[key] = list;
+      }
+      saveData();
+    }
+
+    // ----- 렌더링 함수들 -----
+    function render() {
+      // 1. 날짜 헤더 표시
+      dateText.textContent = formatDisplayDate(selectedDate);
+
+      const todos = getSelectedDateTodos();
+
+      // 2. 할 일 목록 렌더링
+      todoList.innerHTML = '';
+      if (todos.length === 0) {
+        emptyState.style.display = 'block';
+      } else {
+        emptyState.style.display = 'none';
+      }
+
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = `todo-card ${todo.completed ? 'completed' : ''}`;
+
+        // 체크박스
+        const checkbox = document.createElement('div');
+        checkbox.className = 'checkbox';
+        checkbox.addEventListener('click', () => toggleTodo(todo.id));
+
+        // 내용 (텍스트 + 시간)
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'todo-content';
+        contentDiv.addEventListener('click', () => toggleTodo(todo.id));
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'todo-text';
+        textSpan.textContent = todo.text;
+
+        contentDiv.appendChild(textSpan);
+
+        if (todo.time) {
+          const timeBadge = document.createElement('span');
+          timeBadge.className = `time-badge ${todo.time ? 'has-alarm' : ''}`;
+          timeBadge.innerHTML = `⏰ ${todo.time}`;
+          contentDiv.appendChild(timeBadge);
+        }
+
+        // 삭제 버튼
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '&times;';
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteTodo(todo.id);
+        });
+
+        li.appendChild(checkbox);
+        li.appendChild(contentDiv);
+        li.appendChild(deleteBtn);
+
+        todoList.appendChild(li);
+      });
+
+      // 3. 프로그래스 바 업데이트
+      const total = todos.length;
+      const completedCount = todos.filter(t => t.completed).length;
+      progressText.textContent = `${completedCount} / ${total}`;
+      const percentage = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+      progressBarFill.style.width = `${percentage}%`;
+
+      // 4. 캘린더 업데이트
+      renderCalendar();
+    }
+
+    // ----- 캘린더 그려주기 -----
+    function renderCalendar() {
+      const year = currentCalendarDate.getFullYear();
+      const month = currentCalendarDate.getMonth();
+
+      calendarMonthText.textContent = `${year}년 ${month + 1}월`;
+
+      calendarGrid.innerHTML = '';
+
+      // 요일 라벨
+      const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
+      dayLabels.forEach(label => {
+        const div = document.createElement('div');
+        div.className = 'day-label';
+        div.textContent = label;
+        calendarGrid.appendChild(div);
+      });
+
+      // 해당 월의 첫 날 요일과 총 일수
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      // 이전 달 빈 칸
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day-cell empty';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      // 날짜 채우기
+      const todayKey = formatDateKey(new Date());
+      const selectedKey = formatDateKey(selectedDate);
+
+      for (let d = 1; d <= lastDate; d++) {
+        const cellDate = new Date(year, month, d);
+        const cellKey = formatDateKey(cellDate);
+
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        cell.textContent = d;
+
+        if (cellKey === todayKey) cell.classList.add('today');
+        if (cellKey === selectedKey) cell.classList.add('selected');
+        if (todoData[cellKey] && todoData[cellKey].length > 0) {
+          cell.classList.add('has-todo');
+        }
+
+        cell.addEventListener('click', () => {
+          selectedDate = cellDate;
+          render();
+        });
+
+        calendarGrid.appendChild(cell);
+      }
+    }
+
+    // ----- 이벤트 처리 함수 -----
+    function addTodo(text, time) {
+      const todos = getSelectedDateTodos();
+      const newTodo = {
+        id: Date.now(),
+        text: text.trim(),
+        time: time || null,
+        completed: false,
+        notified: false
+      };
+      todos.push(newTodo);
+      setSelectedDateTodos(todos);
+      render();
+    }
+
+    function toggleTodo(id) {
+      const todos = getSelectedDateTodos().map(todo => {
+        if (todo.id === id) {
+          return { ...todo, completed: !todo.completed };
+        }
+        return todo;
+      });
+      setSelectedDateTodos(todos);
+      render();
+    }
+
+    function deleteTodo(id) {
+      const todos = getSelectedDateTodos().filter(todo => todo.id !== id);
+      setSelectedDateTodos(todos);
+      render();
+    }
+
+    function clearCompleted() {
+      const todos = getSelectedDateTodos().filter(todo => !todo.completed);
+      setSelectedDateTodos(todos);
+      render();
+    }
+
+    // ----- 알림 시스템 (Notification API & Web Audio API Sound) -----
+    function playAlarmSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        // 간단한 알림음 2번 생성 (비프음)
+        [0, 0.2].forEach(delay => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime + delay); // A5
+          gain.gain.setValueAtTime(0.1, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.15);
+        });
+      } catch (e) {
+        console.error('소리 재생 중 오류:', e);
+      }
+    }
+
+    function checkAlarms() {
+      const now = new Date();
+      const todayKey = formatDateKey(now);
+      const todos = todoData[todayKey];
+
+      if (!todos) return;
+
+      const currentHours = String(now.getHours()).padStart(2, '0');
+      const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+      let updated = false;
+
+      todos.forEach(todo => {
+        if (!todo.completed && !todo.notified && todo.time === currentTimeStr) {
+          todo.notified = true;
+          updated = true;
+
+          // 알림 소리
+          playAlarmSound();
+
+          // 브라우저 알림
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("⏰ 할 일 알림", {
+              body: todo.text,
+              icon: "https://cdn-icons-png.flaticon.com/512/3602/3602145.png"
+            });
+          } else {
+            // 권한이 없거나 비활성화 시 간단 시각 효과
+            alert(`[알림] ${todo.text}`);
+          }
+        }
+      });
+
+      if (updated) {
+        saveData();
+        render();
+      }
+    }
+
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("이 브라우저는 데스크톱 알림을 지원하지 않습니다.");
+        return;
+      }
+
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          alarmPermBtn.textContent = "🔔 알림 활성화됨";
+          alarmPermBtn.style.color = "#10b981";
+        } else {
+          alarmPermBtn.textContent = "🔔 알림 차단됨";
+          alarmPermBtn.style.color = "#ef4444";
+        }
+      });
+    }
+
+    // ----- 이벤트 리스너 등록 -----
+    todoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addTodo(todoInput.value, timeInput.value);
+      todoInput.value = '';
+      timeInput.value = '';
+      todoInput.focus();
+    });
+
+    clearCompletedBtn.addEventListener('click', clearCompleted);
+    alarmPermBtn.addEventListener('click', requestNotificationPermission);
+
+    // 이전/다음날 이동
+    prevDayBtn.addEventListener('click', () => {
+      selectedDate.setDate(selectedDate.getDate() - 1);
+      currentCalendarDate = new Date(selectedDate);
+      render();
+    });
+
+    nextDayBtn.addEventListener('click', () => {
+      selectedDate.setDate(selectedDate.getDate() + 1);
+      currentCalendarDate = new Date(selectedDate);
+      render();
+    });
+
+    todayBtn.addEventListener('click', () => {
+      selectedDate = new Date();
+      currentCalendarDate = new Date();
+      render();
+    });
+
+    // 캘린더 달 이동
+    prevMonthBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    // ----- 초기화 -----
+    function init() {
+      loadData();
+      render();
+
+      // 알림 권한 상태 초기 버튼 표시
+      if ("Notification" in window && Notification.permission === "granted") {
+        alarmPermBtn.textContent = "🔔 알림 활성화됨";
+        alarmPermBtn.style.color = "#10b981";
+      }
+
+      // 10초마다 알람 체크 루프 실행
+      setInterval(checkAlarms, 10000);
+      checkAlarms();
+    }
+
+    init();
+  </script>
+</body>
+</html>
