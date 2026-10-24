@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나를 소개합니다</title>
+  <style>
+    /* --------------------------------------------------
+       [기본 리셋 및 시스템 폰트 설정]
+       외부 폰트 없이 웹 안전 기본 폰트 스택을 사용합니다.
+    -------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+      color: #0f172a;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      word-break: keep-all;
+    }
+
+    /* 전체 컨테이너 (모바일 가로 스크롤 방지 및 최대 너비 제한) */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* --------------------------------------------------
+       [헤더 디자인]
+       밝고 시원한 파란색 계열 강조와 큰 글씨 크기 적용
+    -------------------------------------------------- */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding: 1rem 0;
+    }
+
+    .nickname {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .bio {
+      font-size: 1.25rem;
+      color: #334155;
+      font-weight: 500;
+    }
+
+    /* --------------------------------------------------
+       [카드 세션 디자인]
+       클릭 가능한 카드와 아코디언 애니메이션
+    -------------------------------------------------- */
+    .cards-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border: 2px solid #bae6fd;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+
+    .card:hover {
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15);
+    }
+
+    /* 카드 헤더 (제목 + 아이콘) */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-icon {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #0284c7;
+      transition: transform 0.3s ease;
+    }
+
+    /* 카드가 열렸을 때 아이콘 회전 */
+    .card.active .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    /* --------------------------------------------------
+       [숨겨진 상세 내용 슬라이드 애니메이션]
+    -------------------------------------------------- */
+    .card-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease;
+      opacity: 0;
+      margin-top: 0;
+    }
+
+    .card.active .card-content {
+      max-height: 200px; /* 상세 내용 길이에 맞게 설정 */
+      opacity: 1;
+      margin-top: 1rem;
+    }
+
+    .card-description {
+      font-size: 1.1rem;
+      color: #475569;
+      border-top: 1px dashed #e2e8f0;
+      padding-top: 0.75rem;
+    }
+
+    /* --------------------------------------------------
+       [반응형 웹 디자인 (모바일 최적화)]
+    -------------------------------------------------- */
+    @media (max-width: 480px) {
+      body {
+        padding: 1.5rem 0.75rem;
+      }
+
+      .nickname {
+        font-size: 2rem;
+      }
+
+      .bio {
+        font-size: 1.1rem;
+      }
+
+      .card {
+        padding: 1.2rem;
+      }
+
+      .card-title {
+        font-size: 1.2rem;
+      }
+
+      .card-description {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 상단 프로필 헤더 -->
+    <header>
+      <h1 class="nickname">✨ 수퍼코더</h1>
+      <p class="bio">매일 조금씩 성장하고 새로운 것에 도전하는 호기심 대장입니다!</p>
+    </header>
+
+    <!-- 소개 카드 3개 -->
+    <main class="cards-wrapper">
+
+      <!-- 카드 1: 좋아하는 것 -->
+      <article class="card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <h2 class="card-title">💙 좋아하는 것</h2>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="card-content">
+          <p class="card-description">
+            친구들이랑 다 같이 모여서 맛있는 거 먹고 신나게 수다 떨며 놀기!
+          </p>
+        </div>
+      </article>
+
+      <!-- 카드 2: 요즘 관심사 -->
+      <article class="card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <h2 class="card-title">🔥 요즘 관심사</h2>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="card-content">
+          <p class="card-description">
+            요즘 제일 핫한 신작 게임 플레이해보기와 실력 키우기에 푹 빠져있습니다.
+          </p>
+        </div>
+      </article>
+
+      <!-- 카드 3: 올해 해 보고 싶은 것 -->
+      <article class="card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <h2 class="card-title">🚀 올해 해 보고 싶은 것</h2>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="card-content">
+          <p class="card-description">
+            올해는 꼭 짐 싸서 해외여행 가기! 새로운 풍경과 맛집들을 탐방해보고 싶어요.
+          </p>
+        </div>
+      </article>
+
+    </main>
+  </div>
+
+  <script>
+    // 카드를 클릭했을 때 펼침/접힘 토글하는 함수
+    function toggleCard(cardElement) {
+      // 현재 클릭한 카드의 active 클래스 유무를 토글
+      cardElement.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>
